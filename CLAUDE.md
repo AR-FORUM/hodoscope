@@ -404,43 +404,43 @@ hodoscope info results/                                # scan directory
 The library exposes composable building blocks for use in Python data pipelines:
 
 ```python
-import hodoscope as ta
+import hodoscope
 
 # Load from .eval (no disk output)
-trajectories, fields = ta.load_eval("run.eval", limit=5)  # sample=True by default
+trajectories, fields = hodoscope.load_eval("run.eval", limit=5)  # sample=True by default
 
 # Or load from directory of trajectory JSONs
-trajectories, fields = ta.load_trajectory_dir("path/to/samples/")
+trajectories, fields = hodoscope.load_trajectory_dir("path/to/samples/")
 
 # Summarize + embed with explicit config (no env side effects)
-config = ta.Config(summarize_model="openai/gpt-4o", embed_dim=256)
-summaries = ta.process_trajectories(trajectories, config=config)
+config = hodoscope.Config(summarize_model="openai/gpt-4o", embed_dim=256)
+summaries = hodoscope.process_trajectories(trajectories, config=config)
 
 # Custom summarization prompt (e.g. for non-SWE domains)
-config = ta.Config(summarize_prompt="Summarize this customer support action in ~10 words.")
-summaries = ta.process_trajectories(trajectories, config=config)
+config = hodoscope.Config(summarize_prompt="Summarize this customer support action in ~10 words.")
+summaries = hodoscope.process_trajectories(trajectories, config=config)
 
 # Or use Config.from_env() for CLI-like behavior (loads .env)
-config = ta.Config.from_env(summarize_model="openai/gpt-4o")
-summaries = ta.process_trajectories(trajectories, config=config)
+config = hodoscope.Config.from_env(summarize_model="openai/gpt-4o")
+summaries = hodoscope.process_trajectories(trajectories, config=config)
 
 # Extract actions only (no LLM calls)
-actions = ta.extract_actions(trajectories[0]["messages"])
+actions = hodoscope.extract_actions(trajectories[0]["messages"])
 
 # Filter summaries (Python API)
-filtered = ta.filter_summaries(summaries, lambda s: s["metadata"]["score"] == 1.0)
+filtered = hodoscope.filter_summaries(summaries, lambda s: s["metadata"]["score"] == 1.0)
 
 # Group + visualize in-memory summaries
-grouped = ta.group_summaries_from_list(summaries, group_by="score")
-ta.visualize_action_summaries(grouped, "plots/explorer.html", methods=["tsne"])
+grouped = hodoscope.group_summaries_from_list(summaries, group_by="score")
+hodoscope.visualize_action_summaries(grouped, "plots/explorer.html", methods=["tsne"])
 
 # FPS-based sampling: rank by importance, take top 10
-ranked = ta.rank_summaries(grouped, method='tsne', n=10)
+ranked = hodoscope.rank_summaries(grouped, method='tsne', n=10)
 # ranked["1.0"][0]["fps_rank"] == 0  (most important)
 
 # Lower-level building blocks
-X_2d = ta.compute_projection(embeddings, method='tsne')  # labels=... for balanced projection
-ranks = ta.compute_fps_ranks(X_2d, labels, n_groups)
+X_2d = hodoscope.compute_projection(embeddings, method='tsne')  # labels=... for balanced projection
+ranks = hodoscope.compute_fps_ranks(X_2d, labels, n_groups)
 ```
 
 ## Data Flow

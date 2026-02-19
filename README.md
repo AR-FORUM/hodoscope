@@ -53,26 +53,26 @@ hodoscope info run.hodoscope.json
 ### Python API
 
 ```python
-import hodoscope as ta
+import hodoscope
 
 # Load trajectories from .eval file
-trajectories, fields = ta.load_eval("run.eval", limit=5, sample=True)
+trajectories, fields = hodoscope.load_eval("run.eval", limit=5, sample=True)
 
 # Or from a directory of trajectory JSONs
-trajectories, fields = ta.load_trajectory_dir("path/to/samples/")
+trajectories, fields = hodoscope.load_trajectory_dir("path/to/samples/")
 
 # Summarize + embed (requires API keys)
-summaries = ta.process_trajectories(trajectories, summarize_model="openai/gpt-4o")
+summaries = hodoscope.process_trajectories(trajectories, summarize_model="openai/gpt-4o")
 
 # Extract actions only (no LLM calls)
-actions = ta.extract_actions(trajectories[0]["messages"])
+actions = hodoscope.extract_actions(trajectories[0]["messages"])
 
 # Group and visualize in-memory summaries
-grouped = ta.group_summaries_from_list(summaries, group_by="score")
-ta.visualize_action_summaries(grouped, "plots/", methods=["tsne"])
+grouped = hodoscope.group_summaries_from_list(summaries, group_by="score")
+hodoscope.visualize_action_summaries(grouped, "plots/", methods=["tsne"])
 
 # Or save to disk and use the file-based workflow
-ta.write_analysis_json("output.hodoscope.json", summaries, fields, source="run.eval")
+hodoscope.write_analysis_json("output.hodoscope.json", summaries, fields, source="run.eval")
 ```
 
 ## CLI Reference
@@ -157,16 +157,16 @@ The library exposes composable building blocks as first-class public functions. 
 ### Loading trajectories
 
 ```python
-import hodoscope as ta
+import hodoscope
 
 # From .eval file (Inspect AI format)
-trajectories, fields = ta.load_eval("run.eval", limit=10, sample=True, seed=42)
+trajectories, fields = hodoscope.load_eval("run.eval", limit=10, sample=True, seed=42)
 
 # From directory of trajectory JSONs
-trajectories, fields = ta.load_trajectory_dir("path/to/samples/")
+trajectories, fields = hodoscope.load_trajectory_dir("path/to/samples/")
 
 # From Docent collection
-trajectories, fields = ta.load_docent("COLLECTION_ID")
+trajectories, fields = hodoscope.load_docent("COLLECTION_ID")
 ```
 
 All loaders return `(trajectories, fields)` where `trajectories` is a list of trajectory dicts (each with a `messages` key) and `fields` is auto-detected file-level metadata. For `.eval` files, fields include `model`, `task`, `dataset_name`, `solver`, `run_id`, `accuracy`, and more.
@@ -175,7 +175,7 @@ All loaders return `(trajectories, fields)` where `trajectories` is a list of tr
 
 ```python
 # Full pipeline: extract actions → summarize with LLM → embed (requires API keys)
-summaries = ta.process_trajectories(
+summaries = hodoscope.process_trajectories(
     trajectories,
     summarize_model="openai/gpt-4o",       # optional, defaults from env/config
     embedding_model="gemini/gemini-embedding-001",
@@ -183,27 +183,27 @@ summaries = ta.process_trajectories(
 )
 
 # Extract actions only (no LLM calls, pure data transform)
-actions = ta.extract_actions(trajectories[0]["messages"])
+actions = hodoscope.extract_actions(trajectories[0]["messages"])
 ```
 
 ### Grouping and visualization
 
 ```python
 # Group in-memory summaries by any metadata field
-grouped = ta.group_summaries_from_list(summaries, group_by="score")
+grouped = hodoscope.group_summaries_from_list(summaries, group_by="score")
 
 # Or group from saved analysis files
-doc = ta.read_analysis_json("output.hodoscope.json")
-grouped = ta.group_summaries([doc], group_by="model")
+doc = hodoscope.read_analysis_json("output.hodoscope.json")
+grouped = hodoscope.group_summaries([doc], group_by="model")
 
 # Visualize
-ta.visualize_action_summaries(grouped, "plots/", methods=["tsne", "pca"])
+hodoscope.visualize_action_summaries(grouped, "plots/", methods=["tsne", "pca"])
 ```
 
 ### Saving results
 
 ```python
-ta.write_analysis_json(
+hodoscope.write_analysis_json(
     "output.hodoscope.json",
     summaries=summaries,
     fields=fields,
