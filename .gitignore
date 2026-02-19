@@ -1,0 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+
+# Environment
+.env
+
+# OS
+.DS_Store
+
+# Testing
+.coverage
+.pytest_cache/
+
+# IDE
+.claude/
+
+# Generated outputs
+*.hodoscope.json
+*.eval
+!tests/sample_evals/*

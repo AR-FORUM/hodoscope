@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hodoscope"
+version = "0.2.0"
+description = "Library for analyzing AI agent trajectories — extract actions, summarize, embed, and visualize."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Ziqian Zhong", email = "ziqianz@andrew.cmu.edu" }]
+keywords = ["ai", "agent", "trajectory", "visualization", "llm", "embedding"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Scientific/Engineering :: Visualization",
+]
+dependencies = [
+    "litellm",
+    "python-dotenv",
+    "tqdm",
+    "numpy",
+    "scikit-learn",
+    "matplotlib",
+    "bokeh",
+    "umap-learn",
+    "trimap",
+    "pacmap",
+    "click",
+    "docent-python",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+hodoscope = "hodoscope.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/AR-FORUM/hodoscope"
+Repository = "https://github.com/AR-FORUM/hodoscope"
+Issues = "https://github.com/AR-FORUM/hodoscope/issues"
+
+[tool.setuptools.packages.find]
+include = ["hodoscope*"]
+
+[tool.pytest.ini_options]
+markers = ["slow: marks tests as slow (deselect with '-m \"not slow\"')"]
