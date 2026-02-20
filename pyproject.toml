@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hodoscope"
-version = "0.2.0"
+version = "0.2.1"
 description = "Library for analyzing AI agent trajectories — extract actions, summarize, embed, and visualize."
 readme = "README.md"
 license = "MIT"
