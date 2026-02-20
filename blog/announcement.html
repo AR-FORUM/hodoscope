@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Hodoscope: Unsupervised Behavior Discovery in AI Agents</title>
+  <meta name="description" content="Hodoscope is an open-source tool for unsupervised behavior discovery in AI agents. Summarize, embed, and visualize agent trajectories to surface unexpected behaviors at scale.">
+  <meta property="og:title" content="Hodoscope: Unsupervised Behavior Discovery in AI Agents">
+  <meta property="og:description" content="An open-source tool for understanding what AI agents are really doing. Summarize, embed, and visualize agent trajectories to surface unexpected behaviors at scale.">
+  <meta property="og:image" content="https://hodoscope.dev/blog/img/image11.png">
+  <meta property="og:url" content="https://hodoscope.dev/blog/announcement.html">
+  <meta property="og:type" content="article">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Hodoscope: Unsupervised Behavior Discovery in AI Agents">
+  <meta name="twitter:description" content="An open-source tool for understanding what AI agents are really doing. Summarize, embed, and visualize agent trajectories to surface unexpected behaviors at scale.">
+  <meta name="twitter:image" content="https://hodoscope.dev/blog/img/image11.png">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='80' font-size='80'>🔭</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #fff;
+      color: #1a1a1a;
+      line-height: 1.7;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: #c7e0ff; }
+
+    a { color: #636EFA; }
+    a:hover { color: #4a54c9; }
+
+    code {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.85em;
+      background: #f0f2f5;
+      padding: 0.1em 0.35em;
+      border-radius: 3px;
+    }
+
+    /* ── Top bar ── */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 2rem;
+      border-bottom: 1px solid #aaa;
+      background: #fff;
+      position: relative;
+      z-index: 1;
+    }
+    .topbar-name {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: #1a1a1a;
+      text-decoration: none;
+      letter-spacing: -0.01em;
+    }
+    .topbar-links {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .topbar-links a {
+      font-size: 0.85rem;
+      color: #888;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+    .topbar-links a:hover { color: #1a1a1a; }
+    .topbar-links .gh {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: #222;
+    }
+    .topbar-links .gh:hover { color: #222; }
+
+    /* ── Background canvas ── */
+    #bgCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* ── Main column ── */
+    .col {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      position: relative;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* ── Header ── */
+    .post-header {
+      padding: 4rem 0 1.5rem;
+    }
+    .post-header h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      letter-spacing: -0.02em;
+      line-height: 1.3;
+      margin-bottom: 1rem;
+    }
+    .post-meta {
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 0.5rem;
+    }
+    .post-meta a { color: #888; }
+    .post-meta a:hover { color: #1a1a1a; }
+    .post-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .post-links a {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.78rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 5px;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .link-site { color: #636EFA; border: 1.5px solid #636EFA; }
+    .link-site:hover { background: rgba(99, 110, 250, 0.05); }
+    .link-gh { color: #008260; border: 1.5px solid #009a71; }
+    .link-gh:hover { background: rgba(0, 154, 113, 0.05); }
+
+    /* ── Separator ── */
+    hr {
+      border: none;
+      border-top: 1px solid #eee;
+      margin: 3rem 0;
+    }
+
+    /* ── Prose ── */
+    .prose h2 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 3rem 0 1rem;
+      letter-spacing: -0.01em;
+    }
+    .prose h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin: 2.5rem 0 0.75rem;
+    }
+    .prose h4 {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #333;
+      margin: 2rem 0 0.5rem;
+    }
+    .prose h4 a {
+      font-weight: 400;
+      font-size: 0.88rem;
+    }
+    .prose p {
+      font-size: 0.95rem;
+      color: #333;
+      line-height: 1.8;
+      margin-bottom: 1.25rem;
+    }
+    .prose strong { color: #1a1a1a; }
+    .prose ul, .prose ol {
+      margin: 0 0 1.25rem 1.5rem;
+      font-size: 0.95rem;
+      color: #333;
+      line-height: 1.8;
+    }
+    .prose li { margin-bottom: 0.5rem; }
+
+    /* ── Code blocks ── */
+    .codebox {
+      background: #fafcff;
+      border: 1px solid #e0e3e8;
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.78rem;
+      line-height: 1.9;
+      color: #1a1a1a;
+      overflow-x: auto;
+      margin-bottom: 1.5rem;
+    }
+    .codebox .comment { color: #999; font-style: italic; }
+    .codebox .prompt { color: #aaa; user-select: none; }
+    .codebox .cmd { color: #1a1a1a; font-weight: 500; }
+    .codebox .arg { color: #00a67a; }
+    .codebox .flag { color: #AB63FA; }
+
+    /* ── Figures ── */
+    .figure {
+      margin: 1.5rem 0 1.75rem;
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .figure img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .figure .cap {
+      padding: 0.75rem 1rem;
+      font-size: 0.82rem;
+      color: #555;
+      line-height: 1.5;
+      font-style: italic;
+      text-align: center;
+      background: none;
+    }
+
+    /* ── Table ── */
+    .prose table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.5rem 0;
+      font-size: 0.88rem;
+    }
+    .prose th {
+      text-align: left;
+      font-weight: 600;
+      padding: 0.6rem 0.8rem;
+      border-bottom: 2px solid #ddd;
+      color: #1a1a1a;
+    }
+    .prose td {
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid #eee;
+      color: #333;
+      vertical-align: top;
+    }
+
+    /* ── Closing meta ── */
+    .closing-meta {
+      border-top: 1px solid #eee;
+      margin-top: 3rem;
+      padding-top: 2rem;
+    }
+    .closing-section {
+      margin-bottom: 1.75rem;
+    }
+    .closing-label {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 0.72rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #555;
+      margin-bottom: 0.4rem;
+    }
+    .closing-section p {
+      font-size: 0.88rem;
+      color: #555;
+      line-height: 1.7;
+      margin: 0;
+    }
+    .cite-box {
+      font-size: 0.75rem !important;
+      line-height: 1.7 !important;
+      color: #555;
+    }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid #999;
+      padding: 2rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: #777;
+      background: #fff;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .post-header { padding: 2.5rem 0 1rem; }
+      .post-header h1 { font-size: 1.4rem; }
+      .codebox { font-size: 0.72rem; padding: 1rem 1.25rem; }
+      .topbar-links a:not(.gh) { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="bgCanvas"></canvas>
+
+  <div class="topbar">
+    <a href="../" class="topbar-name">🔭 hodoscope</a>
+    <div class="topbar-links">
+      <a href="https://github.com/AR-FORUM/hodoscope" class="gh">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="post-header">
+      <h1>Hodoscope: Unsupervised Behavior Discovery in AI Agents</h1>
+      <p class="post-meta">Ziqian Zhong, Shashwat Saxena, Aditi Raghunathan&nbsp; &middot; &nbsp;February 20, 2026</p>
+      <div class="post-links">
+        <a href="../" class="link-site">Website</a>
+        <a href="https://github.com/AR-FORUM/hodoscope" class="link-gh">GitHub</a>
+      </div>
+    </div>
+
+    <div class="prose">
+
+      <p>
+        We're releasing Hodoscope, an open-source tool for understanding what AI agents are really doing. As agents are deployed on increasingly complex tasks, we need ways to discover unexpected behaviors without knowing in advance what to look for. Hodoscope enables human-in-the-loop analysis of agent trajectories at scale. Rather than relying on rigid and pre-defined criteria for what constitutes an interesting behavior, hodoscope uses unsupervised methods to surface insights.
+      </p>
+
+      <div class="codebox">
+        <span class="prompt">$ </span><span class="cmd">pip install</span> <span class="arg">hodoscope</span>
+      </div>
+
+      <hr>
+
+      <h2>Part 1: Overview</h2>
+
+      <h3>The Problem</h3>
+
+      <p>
+        As AI agents tackle increasingly complex tasks &mdash; writing code, browsing the web, <a href="https://andonlabs.com/evals/vending-bench-2">running businesses</a> &mdash; we need better ways to monitor them. Automated LLM-based evaluation (ask an LLM if the agent did something suspicious) is promising, but it may share the same blind spots as the agent itself. It works well when we know exactly what to look for, but struggles to catch novel failure modes we haven't anticipated.
+      </p>
+
+      <p>
+        We believe human judgment is essential for catching these novel failure modes, but reviewing every trace doesn't scale. Hodoscope aims to reduce the human effort needed as much as possible, so that a person can effectively oversee hundreds or thousands of agent traces, spending their attention where it matters most.
+      </p>
+
+      <h4>Example: the time traveling incident <a href="https://github.com/SWE-bench/SWE-bench/issues/465">(SWE-bench issue #465)</a></h4>
+
+      <p>
+        SWE-Bench evaluates coding agents by asking them to fix real GitHub issues. Each task checks out a repo at the commit before the fix &mdash; but the actual solution commit remains reachable via git log. Some agents exploited this, running commands like <code>git log --all</code> to surface the fix diff directly rather than reasoning about the problem.
+      </p>
+
+      <p>
+        When we asked Claude Opus 4.6 to evaluate a trace containing this behavior, it marked it as non-suspicious, claiming this is a routine investigation step. Only after we provided the issue link as additional context could Opus recognize what was wrong.
+      </p>
+
+      <div class="figure">
+        <img src="img/image5.png" alt="Claude evaluating time travel behavior">
+        <hr style="border:none; border-top:1px solid #eee; margin:20px;">
+        <img src="img/image10.png" alt="Claude with additional context">
+        <div class="cap">Claude Opus 4.6 needed a hint to recognize the time traveling behavior as problematic.</div>
+      </div>
+
+      <h3>Our Approach</h3>
+
+      <p>Hodoscope takes an unsupervised approach with three stages:</p>
+
+      <ol>
+        <li><strong>Summarization</strong> &mdash; condense each agent action into a high-level summary that captures the behavior rather than setup-specific details (e.g., "edit test file to fix assertion" instead of "modify /home/user/repo/django/tests/utils.py line 42 to assert error_code == 403").</li>
+        <li><strong>Embedding</strong> &mdash; embed summaries into a shared vector space where similar behaviors (e.g. "run test suite," or "edit source file") end up close together, then project into 2D via t-SNE for visualization.</li>
+        <li><strong>Distribution diffing</strong> &mdash; compute and compare kernel density estimates (KDE) of different agent setups where abnormal behaviors are expected to manifest only in some setups. For example, we may compare agents using different LLMs on the same task. Overlaying these density differences on the embedding visualization helps identify behaviors unique to one setup.</li>
+      </ol>
+
+      <div class="figure">
+        <img src="img/image12.png" alt="Hodoscope visualization on SWE-bench">
+        <div class="cap">Hodoscope visualization on SWE-bench. The density difference between traces of o3 and other models' is overlaid (red = overrepresented, blue = underrepresented).</div>
+      </div>
+
+      <p>
+        From the result plot, humans can investigate further on regions with significant distribution differences interactively. Significant human effort is saved in this process as only a few examples from each region need to be examined for a complete picture.
+      </p>
+
+      <p>
+        This approach is particularly useful for exploratory studies, where you are investigating a new model or benchmark and genuinely don't know what failure modes to expect. With possible behaviors surfaced, targeted or supervised study can then be carried out.
+      </p>
+
+      <h3>What We've Found</h3>
+
+      <p>
+        We used Hodoscope to discover benchmark gaming behaviors by frontier AI agents. The general strategy is to compare setups where you expect different behaviors, and focus on what's unique to one setup. This could be comparing multiple models on the same benchmark (reward hacking is unlikely to manifest identically across all models), or comparing the same model across different task variants (in our case, solvable and impossible tasks).
+      </p>
+
+      <p>
+        <strong>New finding: unsquashed git history on Commit0.</strong>
+        In collaboration with <a href="https://openhands.dev/">OpenHands</a>, we discovered a previously unknown time-traveling vulnerability in the <a href="https://arxiv.org/abs/2412.01769">Commit0</a> benchmark (<a href="https://github.com/commit-0/commit0/issues/113">Commit0 Issue #113</a>, <a href="https://github.com/OpenHands/benchmarks/issues/421">OpenHands Issue #421</a>). Commit0 works by taking a real repository, creating an initial commit that strips out the bulk of the code, and then asking the agent to rewrite the removed portions. The problem: the git history wasn't squashed. Models including MiniMax M2.5 and Claude Opus figured out they could simply browse the git log, find the original code, and copy it back &mdash; bypassing the task entirely. We surfaced this by examining clusters unique to Minimax M2.5. After patching the issue, MiniMax's score dropped significantly. <a href="https://hodoscope.dev/example_trajectories/commit0.html">Visualization (27 MB)</a>
+      </p>
+
+      <div class="figure">
+        <img src="img/image8.png" alt="Git operations cluster in Commit0">
+        <div class="cap">We discovered this suspicious cluster of git operations by overlaying the density difference between traces of MiniMax-M2.5 and other models.</div>
+      </div>
+
+      <div class="figure">
+        <img src="img/image9.png" alt="Action detail showing time traveling">
+        <div class="cap">Action details could be examined by clicking on individual dots. Here, Minimax-M2.5 is looking at a code snippet from an unredacted commit.</div>
+      </div>
+
+      <p>We also applied Hodoscope to benchmarks where agents are known to game, and successfully rediscovered those behaviors.</p>
+
+      <p>
+        <strong>Rediscovery: GPT-5 hacking on ImpossibleBench.</strong>
+        We compared GPT-5 trajectories on <a href="https://arxiv.org/abs/2310.06770">SWE-bench</a> and impossible tasks from <a href="https://arxiv.org/abs/2510.20270">ImpossibleBench</a> where the only way to pass is to hack the evaluation. When we originally built ImpossibleBench, identifying these reward hacking behaviors required painstaking manual review of many traces. With Hodoscope, the same behaviors &mdash; modifying test cases, special-casing, maintaining special internal states &mdash; surfaced in a prominent cluster. <a href="https://hodoscope.dev/example_trajectories/impossiblebench.html">Visualization (37MB)</a>
+      </p>
+
+      <div class="figure">
+        <img src="img/image14.png" alt="ImpossibleBench density overlay">
+        <div class="cap">We overlaid the density difference between traces in SWE-bench and ImpossibleBench and discovered this suspicious cluster.</div>
+      </div>
+
+      <div class="figure">
+        <img src="img/image6.png" alt="ImpossibleBench action details">
+      </div>
+
+      <p>
+        <strong>Rediscovery: iQuest-Coder-V1 time traveling on SWE-bench.</strong>
+        We also re-discovered the <a href="https://github.com/IQuestLab/IQuest-Coder-V1/issues/14">iQuest-Coder-V1 time-traveling issue</a> on SWE-bench. As outdated Docker images were used for evaluation, the agent could access git history containing future patches &mdash; essentially looking at the answer key. Hodoscope made this visible by surfacing an unusual cluster of <code>git log</code> actions that is unique to iQuest-Coder-V1. <a href="https://hodoscope.dev/example_trajectories/swebench_iquest.html">Visualization (13MB)</a>
+      </p>
+
+      <p>We walk through this finding in more detail in the next part (demo) of this blog.</p>
+
+      <div class="figure">
+        <img src="img/image7.png" alt="iQuest time traveling on SWE-bench">
+        <div class="cap">We (re-)discovered iQuest-Coder-V1 trawling git logs for a fix in the future by diffing traces of iQuest-Coder-V1 and other models.</div>
+      </div>
+
+      <p>
+        Although we focused on benchmark gaming, we believe the tool could also be useful for other setups, such as understanding model behavioral differences pre- and post-reinforcement learning or debugging agent deployments. We are releasing Hodoscope now so others can start exploring their own agent traces.
+      </p>
+
+      <hr>
+
+      <h2>Part 2: Demo &mdash; Replicating the SWE-bench Finding</h2>
+
+      <p>Here's a concrete walkthrough of how Hodoscope works, using the SWE-bench study that re-discovered the iQuest time-traveling issue (&amp; more!). A full runnable version of this example is available at <a href="https://github.com/AR-FORUM/hodoscope/tree/main/examples/swebench_iquest">examples/swebench_iquest</a> in our repo.</p>
+
+      <h3>Step 1: Fetch traces</h3>
+
+      <p>
+        Hodoscope natively accepts <a href="https://docent.transluce.org/">Docent</a> collections, <a href="https://inspect.aisi.org.uk/">Inspect AI</a> .eval files, <a href="https://openhands.dev/">OpenHands</a> evaluation results, and plain trajectory JSON directories.
+      </p>
+
+      <p>
+        We're comparing five models on SWE-bench Verified. Four are Docent collections from the <a href="https://www.swebench.com/">SWE-bench Leaderboard</a>: <a href="https://docent.transluce.org/dashboard/565e5680-b913-4031-b537-00721a7a619a/agent_run">o3</a>, <a href="https://docent.transluce.org/dashboard/cd7a23c5-a2b1-4cab-b851-6e2c42aaf0f3/agent_run">gpt-4.1</a>, <a href="https://docent.transluce.org/dashboard/f39d3041-d9d7-4f1b-b75e-8a13addb9e6e/agent_run">qwen3-coder</a>, and <a href="https://docent.transluce.org/dashboard/7fde5552-6b17-4cb7-ab9c-15fd9fb5b845/agent_run">deepseek-v3.2-reasoner</a>. The fifth, <a href="https://github.com/IQuestLab/IQuest-Coder-V1">iQuest-Coder-v1</a>, requires manual preprocessing. Note that the SWE-bench Leaderboard has since been updated to a newer set of traces; we use the older versions that were available when we ran these experiments.
+      </p>
+
+      <p><strong>iQuest preprocessing</strong> &mdash; raw trajectories are available as a json from their Github repo. We download and split the single JSON into individual trajectory files:</p>
+
+      <div class="codebox">
+        <span class="prompt">$ </span><span class="cmd">wget</span> <span class="arg">https://github.com/IQuestLab/IQuest-Coder-V1/raw/044c57a/IQuest-Coder-Eval/SWE-Verified/traj.zip</span><br>
+        <span class="prompt">$ </span><span class="cmd">unzip</span> <span class="arg">traj.zip</span> <span class="flag">&amp;&amp;</span> <span class="cmd">rm</span> <span class="arg">traj.zip</span> <span class="flag">&amp;&amp;</span> <span class="cmd">mv</span> <span class="arg">traj.json iquest_traj.json</span><br>
+        <br>
+        <span class="comment"># Split into individual trajectory files</span><br>
+        <span class="prompt">$ </span><span class="cmd">python</span> <span class="arg">-c</span> <span class="flag">"</span><br>
+        import json, pathlib<br>
+        p = pathlib.Path('iquest_samples')<br>
+        p.mkdir(exist_ok=True)<br>
+        for i, t in enumerate(json.load(open('iquest_traj.json'))):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;(p / f'traj_{i:04d}.json').write_text(<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;json.dumps({'id': f'traj_{i:04d}', 'messages': t['messages']})<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;)<br>
+        <span class="flag">"</span><br>
+        <span class="prompt">$ </span><span class="cmd">rm</span> <span class="arg">iquest_traj.json</span>
+      </div>
+
+      <h3>Step 2: Analyze</h3>
+
+      <p>Run <code>hodoscope analyze</code> on each source. We sample 50 trajectories per model with a fixed seed for reproducibility. We also annotate the model names.</p>
+
+      <div class="codebox">
+        <span class="comment"># Docent sources</span><br>
+        <span class="prompt">$ </span><span class="cmd">hodoscope analyze</span> <span class="flag">--docent-id</span> <span class="arg">565e5680-b913-4031-b537-00721a7a619a</span> <span class="flag">-l</span> <span class="arg">50</span> <span class="flag">--seed</span> <span class="arg">42</span> <span class="flag">--field</span> <span class="arg">model=o3</span><br>
+        <span class="prompt">$ </span><span class="cmd">hodoscope analyze</span> <span class="flag">--docent-id</span> <span class="arg">cd7a23c5-a2b1-4cab-b851-6e2c42aaf0f3</span> <span class="flag">-l</span> <span class="arg">50</span> <span class="flag">--seed</span> <span class="arg">42</span> <span class="flag">--field</span> <span class="arg">model=gpt-4.1</span><br>
+        <span class="prompt">$ </span><span class="cmd">hodoscope analyze</span> <span class="flag">--docent-id</span> <span class="arg">f39d3041-d9d7-4f1b-b75e-8a13addb9e6e</span> <span class="flag">-l</span> <span class="arg">50</span> <span class="flag">--seed</span> <span class="arg">42</span> <span class="flag">--field</span> <span class="arg">model=qwen3-coder</span><br>
+        <span class="prompt">$ </span><span class="cmd">hodoscope analyze</span> <span class="flag">--docent-id</span> <span class="arg">7fde5552-6b17-4cb7-ab9c-15fd9fb5b845</span> <span class="flag">-l</span> <span class="arg">50</span> <span class="flag">--seed</span> <span class="arg">42</span> <span class="flag">--field</span> <span class="arg">model=deepseek</span><br>
+        <br>
+        <span class="comment"># Raw trajectory directory</span><br>
+        <span class="prompt">$ </span><span class="cmd">hodoscope analyze</span> <span class="arg">iquest_samples/</span> <span class="flag">-l</span> <span class="arg">50</span> <span class="flag">--seed</span> <span class="arg">42</span> <span class="flag">--field</span> <span class="arg">model=iquest-coder-v1</span>
+      </div>
+
+      <p>Each command produces a <code>.hodoscope.json</code> file containing action summaries and embeddings.</p>
+
+      <h3>Step 3: Visualize</h3>
+
+      <p>Combine everything into a single interactive explorer:</p>
+
+      <div class="codebox">
+        <span class="prompt">$ </span><span class="cmd">hodoscope viz</span> <span class="arg">*.hodoscope.json</span> <span class="flag">--proj tsne --open</span>
+      </div>
+
+      <p>This command generates a self-contained HTML file and opens it in your browser. Each point corresponds to an agent action, colored by model. This is <a href="https://hodoscope.dev/example_trajectories/swebench_iquest.html">our output for this walkthrough (13 MB)</a>.</p>
+
+      <h3>Step 4: Discover</h3>
+
+      <p>
+        With all models plotted together, you can immediately see how behaviors cluster. Most of the embedding space is shared &mdash; all models write code, run tests, read files. But there are regions that only light up for iQuest. The density overlay makes this especially clear: switch the overlay to iQuest vs. the other models, and the unique cluster stands out in red.
+      </p>
+
+      <div class="figure">
+        <img src="img/image4.png" alt="iQuest density overlay">
+      </div>
+
+      <p>We can then manually analyze these regions. The following is the authors' human annotations.</p>
+
+      <div class="figure">
+        <img src="img/image13.png" alt="Annotated clusters">
+      </div>
+
+      <p>We can click on dots to examine corresponding actions. In this case, we found actions running <code>git log</code> near the center of the "git related" cluster above.</p>
+
+      <div class="figure">
+        <img src="img/image2.png" alt="git log action detail">
+      </div>
+
+      <p>If we search for "git log" in the textbox above, we will find only 79 out of 4006 actions (2.0%) have this behavior. With Hodoscope however, it only took us a few minutes to discover them.</p>
+
+      <div class="figure">
+        <img src="img/image3.png" alt="git log search results">
+        <div class="cap">All the "git log" occurrences &mdash; our embedding is working well!</div>
+      </div>
+
+      <h3>Step 5: Verify (when needed)</h3>
+
+      <p>Another thing we discovered is that iQuest modifies test cases a lot. Is it problematic?</p>
+
+      <div class="figure">
+        <img src="img/image11.png" alt="Test modification cluster">
+      </div>
+
+      <p>
+        By examining a couple of transcripts, we discovered that most of the test modifications seem reasonable. In the example below, while this test was not modified in the standard patch, the modification makes sense and this particular test is not included in evaluation (see discussion around this <a href="https://github.com/swe-bench/SWE-bench/issues/257">here</a>). A lot of the modifications are also on the tests that iQuest itself generated.
+      </p>
+
+      <div class="figure">
+        <img src="img/image1.png" alt="Test modification example">
+      </div>
+
+      <p>Are any of these modifications actually harmful? To find out, we wrote a python script that examines all instances of test modification under <code>testbed/tests</code> in the full iQuest trajectory set.</p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Type</th>
+            <th>Count</th>
+            <th>Explanation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Modified tests within <code>test_patch</code></td>
+            <td>60</td>
+            <td><strong>Expected/Justified:</strong> The modification targets tests meant to be evaluated.</td>
+          </tr>
+          <tr>
+            <td>Modified unreferenced tests (not in <code>FAIL_TO_PASS</code> or <code>PASS_TO_PASS</code>)</td>
+            <td>10</td>
+            <td><strong>Harmless:</strong> Edits target tests that are ignored by the evaluation framework.</td>
+          </tr>
+          <tr>
+            <td>Malicious manipulation of referenced tests</td>
+            <td>0</td>
+            <td><strong>Harmful:</strong> No such instances of the agent actively gaming the evaluation were found.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>
+        Turns out none of these edits were actually gaming the evaluation, and therefore, we do not consider this behavior truly detrimental.
+      </p>
+
+      <p>
+        This illustrates a general pattern for using Hodoscope: first, unsupervised exploration surfaces a suspicious behavior you wouldn't have thought to look for; then, you follow up with targeted, supervised analysis to verify whether the behavior is actually problematic.
+      </p>
+
+      <hr>
+
+      <h2>Part 3: Design Choices</h2>
+
+      <h3>Summarize, then embed</h3>
+
+      <p>
+        Raw agent actions are noisy &mdash; full of setup-specific paths and formatting artifacts. Directly embedding raw actions causes the embedding space to cluster by task context (e.g., all Django actions together, all SymPy actions together) rather than by <em>behavior</em>. Our summarization step focuses on stripping away these artifacts so that semantically similar actions end up close together regardless of context.
+      </p>
+
+      <p>For example, consider two actions that both view a range of lines from a source file, but in completely different codebases and using different tools:</p>
+
+      <ul>
+        <li><strong>Raw action A:</strong> <code>bash {"command": "sed -n '710,717p' sympy/physics/quantum/tensorproduct.py"}</code> &rarr; <em>Output: 8 lines of tensor product code</em></li>
+        <li><strong>Raw action B:</strong> <code>text_editor {"command": "view", "path": "/testbed/tests/delete/tests.py", "view_range": [470, 500]}</code> &rarr; <em>Output: 30 lines of Django test code</em></li>
+      </ul>
+
+      <p>After our summarization step:</p>
+
+      <ul>
+        <li><strong>Summary A:</strong> "Read a small line range from a source file &mdash; for inspecting specific conditional logic around a tensor operation"</li>
+        <li><strong>Summary B:</strong> "Viewed a range of lines from a test source file &mdash; for inspecting a fast-delete test and potential indentation issue nearby"</li>
+      </ul>
+
+      <p>and embedding cosine similarity improves from 0.70 to 0.79.</p>
+
+      <p>
+        To measure this quantitatively, we <a href="https://github.com/AR-FORUM/hodoscope/tree/main/examples/test_summary">compiled pairs</a> of semantically similar actions under different contexts and measured their embedding cosine similarity before and after summarization and used this to tweak our summarization prompt. In the end, we are able to achieve generally higher cosine similarities for similar actions while different actions receive much lower cosine similarities (since task-specific noise is removed).
+      </p>
+
+      <h3>Balanced projections</h3>
+
+      <p>
+        Hodoscope supports multiple projection methods (PCA, t-SNE, UMAP, TriMAP, PaCMAP), but we generally find t-SNE best preserves local structure, keeping similar behaviors tightly clustered while separating distinct ones.
+      </p>
+
+      <p>
+        When groups have different sizes, we oversample smaller groups before fitting the projection so all groups have equal influence on the layout. This prevents a large group from dominating the embedding space and hiding patterns in smaller groups.
+      </p>
+
+      <h3>Density diffing</h3>
+
+      <p>
+        We designed Hodoscope upon the population diffing idea: the problematic behaviors are the ones that are uniquely dense in one setup compared to the baseline setup.
+      </p>
+
+      <p>
+        To support this, Hodoscope computes per-group kernel density estimates (KDE) over the 2D projection and overlays the difference: for a selected group, each point in the overlay is colored by how much that group's density exceeds (or falls below) the average density of all other groups. Regions where the selected group is overrepresented light up, guiding the user to the most distinctive behaviors.
+      </p>
+
+      <hr>
+
+      <h2>Getting Started</h2>
+
+      <div class="codebox">
+        <span class="prompt">$ </span><span class="cmd">pip install</span> <span class="arg">hodoscope</span><br>
+        <span class="prompt">$ </span><span class="cmd">hodoscope analyze</span> <span class="arg">*.eval</span><br>
+        <span class="prompt">$ </span><span class="cmd">hodoscope viz</span> <span class="arg">*.hodoscope.json</span> <span class="flag">--open</span>
+      </div>
+
+      <p>
+        We hope Hodoscope is useful for folks working on agent evaluation, safety, or just trying to understand what their agents are up to. If you find interesting behavioral patterns or have ideas to improve this, we'd love to hear from you! A paper with more details will be coming soon.
+      </p>
+
+      <div class="closing-meta">
+        <div class="closing-section">
+          <div class="closing-label">Authors</div>
+          <p>Ziqian Zhong, Shashwat Saxena, Aditi Raghunathan</p>
+        </div>
+
+        <div class="closing-section">
+          <div class="closing-label">Acknowledgements</div>
+          <p>We would like to thank Graham Neubig and OpenHands for suggesting and supporting experiments, and Mingyang Deng, Chen Wu, and Jiaxin Wen for reviewing an early draft of this post. We also gratefully acknowledge support from Jane Street, UK AISI, Schmidt Sciences, National Institute of Standards and Technology.</p>
+        </div>
+
+        <div class="closing-section">
+          <div class="closing-label">Citation</div>
+          <div class="codebox cite-box">
+@article{zhong2026hodoscope,<br>
+&nbsp;&nbsp;title={Hodoscope: Unsupervised Behavior Discovery in AI Agents},<br>
+&nbsp;&nbsp;author={Zhong, Ziqian and Saxena, Shashwat and Raghunathan, Aditi},<br>
+&nbsp;&nbsp;year={2026},<br>
+&nbsp;&nbsp;url={https://hodoscope.dev/blog/announcement.html}<br>
+}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 Hodoscope contributors &middot; MIT License
+  </footer>
+
+  <script>
+    (function() {
+      var canvas = document.getElementById('bgCanvas');
+      var ctx = canvas.getContext('2d');
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var w, h;
+
+      function resize() {
+        w = window.innerWidth;
+        h = document.documentElement.scrollHeight;
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      }
+
+      var colors = ['#00CC96', '#AB63FA', '#FFA15A', '#19D3F3', '#FF6692', '#636EFA'];
+      var traces = [];
+
+      function R() { return Math.random(); }
+
+      function makeTrace() {
+        var cx = R() * w;
+        var cy = R() * h;
+        var color = colors[Math.floor(R() * colors.length)];
+        var radius = 30 + R() * 120;
+        var startAngle = R() * Math.PI * 2;
+        var dir = R() < 0.5 ? 1 : -1;
+        var totalSteps = 120 + Math.floor(R() * 80);
+        var lw = 0.8 + R() * 1.2;
+        var opacity = 1.0;
+        var dotR = 1.5 + R() * 1.5;
+
+        var pts = [];
+        for (var i = 0; i <= totalSteps; i++) {
+          var a = startAngle + dir * (i / totalSteps) * Math.PI * 2;
+          pts.push({x: cx + Math.cos(a) * radius, y: cy + Math.sin(a) * radius});
+        }
+
+        return {
+          pts: pts, color: color, opacity: opacity, lw: lw, dotR: dotR,
+          head: Math.floor(R() * totalSteps),
+          tailLen: Math.floor(totalSteps / 3),
+          speed: 0.08 + R() * 0.12,
+          life: 0
+        };
+      }
+
+      function initTraces() {
+        traces = [];
+        for (var i = 0; i < 80; i++) {
+          var t = makeTrace();
+          t.head = Math.floor(R() * t.pts.length);
+          traces.push(t);
+        }
+      }
+
+      var raf;
+      function animate() {
+        ctx.clearRect(0, 0, w, h);
+        for (var i = traces.length - 1; i >= 0; i--) {
+          var t = traces[i];
+          t.head += t.speed;
+          t.life = Math.min(t.head / (t.pts.length - 1), 1);
+          if (t.life >= 1) { traces[i] = makeTrace(); traces[i].head = 0; continue; }
+          var envelope = 1 - t.life;
+          var headIdx = Math.floor(t.head);
+          var tailStart = Math.max(0, headIdx - t.tailLen);
+          for (var j = tailStart; j < headIdx; j++) {
+            var frac = (j - tailStart) / t.tailLen;
+            ctx.beginPath();
+            ctx.moveTo(t.pts[j].x, t.pts[j].y);
+            ctx.lineTo(t.pts[j + 1].x, t.pts[j + 1].y);
+            ctx.strokeStyle = t.color;
+            ctx.globalAlpha = t.opacity * frac * frac * envelope;
+            ctx.lineWidth = t.lw;
+            ctx.stroke();
+          }
+          if (headIdx < t.pts.length) {
+            ctx.beginPath();
+            ctx.arc(t.pts[headIdx].x, t.pts[headIdx].y, t.dotR, 0, Math.PI * 2);
+            ctx.fillStyle = t.color;
+            ctx.globalAlpha = t.opacity * 1.5 * envelope;
+            ctx.fill();
+          }
+          ctx.globalAlpha = 1;
+        }
+        raf = requestAnimationFrame(animate);
+      }
+
+      resize(); initTraces(); animate();
+
+      var timer;
+      window.addEventListener('resize', function() {
+        clearTimeout(timer);
+        timer = setTimeout(function() { resize(); initTraces(); }, 200);
+      });
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) { cancelAnimationFrame(raf); raf = null; }
+        else if (!raf) { animate(); }
+      });
+    })();
+  </script>
+
+</body>
+</html>
