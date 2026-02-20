@@ -190,6 +190,18 @@
     }
     .prose li { margin-bottom: 0.5rem; }
 
+    /* ── Callouts ── */
+    .callout-warning {
+      background: #fffbeb;
+      border-left: 3px solid #f59e0b;
+      padding: 0.75rem 1rem;
+      font-size: 0.88rem;
+      color: #333;
+      line-height: 1.7;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: 1.5rem;
+    }
+
     /* ── Code blocks ── */
     .codebox {
       background: #fafcff;
@@ -489,6 +501,10 @@
       <h3>Step 2: Analyze</h3>
 
       <p>Run <code>hodoscope analyze</code> on each source. We sample 50 trajectories per model with a fixed seed for reproducibility. We also annotate the model names.</p>
+
+      <div class="callout-warning">
+        <strong>⚠️ Cost note:</strong> This demo uses the default summarization model (<code>gpt-5.2</code>) and costs ~$35 in OpenAI API calls total. You can reduce cost by switching summarization model (e.g. <code>--summarize-model gemini/gemini-3-flash-preview</code>) or further subsampling.
+      </div>
 
       <div class="codebox">
         <span class="comment"># Docent sources</span><br>
