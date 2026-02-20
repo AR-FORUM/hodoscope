@@ -499,6 +499,12 @@ Raw Sources (.eval files, Docent, trajectory JSONs, OpenHands .jsonl files)
 - Default group-by field for viz/sample/grouping is `DEFAULT_GROUP_BY` (`"model"`), defined once in `config.py`
 - `fps_alpha` / `fps_beta` in Config control density-weighted FPS ranking. Exposed via `FPS_ALPHA` / `FPS_BETA` env vars. `pipeline.viz()` resolves from env when not explicitly passed; `pipeline.sample()` accepts them as direct args.
 
+## CI/CD
+
+GitHub Actions workflows in `.github/workflows/`:
+- **`test.yml`** — Runs tests on push/PR (also supports `workflow_dispatch`)
+- **`publish.yml`** — Builds and publishes to PyPI via trusted publishing on version tags (`v*`). To release: `git tag v0.X.Y && git push origin v0.X.Y`
+
 ## Testing
 
 ```bash
