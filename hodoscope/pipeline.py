@@ -795,7 +795,7 @@ def viz(
     methods = proj if proj else ["tsne"]
 
     print(f"\nGenerating unified plot with methods: {', '.join(methods)}...")
-    visualize_action_summaries(grouped, output_file=output_file, methods=methods, alpha=alpha, beta=beta)
+    return visualize_action_summaries(grouped, output_file=output_file, methods=methods, alpha=alpha, beta=beta)
 
 
 # ---------------------------------------------------------------------------

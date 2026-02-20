@@ -107,7 +107,7 @@ tests/                                # Test suite
 
 **High-level orchestrators (used by CLI):**
 - `analyze(sources, docent_id, output, fields, limit, save_samples, model_name, sample, seed, resume, config, reembed)` — End-to-end: sources → .hodoscope.json files. `config` defaults to `Config.from_env()` (convenient CLI-like behavior). `reembed=True` re-embeds existing summaries using current config (e.g. after changing embedding model/dim). Calls `load_eval`/`load_trajectory_dir`/`load_openhands`/`load_docent` → `process_trajectories` → `write_analysis_json`.
-- `viz(sources, group_by, proj, output_file, alpha, beta, filter)` — Visualize analysis JSONs (single unified HTML). `alpha`/`beta` default to `None` (resolved from `FPS_ALPHA`/`FPS_BETA` env vars or hardcoded defaults). `filter` accepts a `Callable[[dict], bool]` to filter summaries before grouping.
+- `viz(sources, group_by, proj, output_file, alpha, beta, filter)` — Visualize analysis JSONs (single unified HTML). Returns the output `Path`. `alpha`/`beta` default to `None` (resolved from `FPS_ALPHA`/`FPS_BETA` env vars or hardcoded defaults). `filter` accepts a `Callable[[dict], bool]` to filter summaries before grouping.
 - `sample(sources, group_by, n, method, alpha, beta, output, interleave, filter)` — FPS-based representative sampling from analysis JSONs. Paginated terminal output (grouped or interleaved by rank) or lightweight JSON (no embeddings). `filter` accepts a `Callable[[dict], bool]` to filter summaries before grouping.
 - `show_info(sources)` — Print metadata and summary counts
 
@@ -221,7 +221,7 @@ All controls in a single row matching plot width. Status area shows "N total", "
 - `_save_with_sidebar(layout, html_path, title, external_data)` — Save HTML + append sidebar + inject external data as `<script>` tags
 
 **Public Function:**
-- `visualize_action_summaries(summaries_by_type, output_file=None, methods=None, grid_size=80, bandwidth=None, alpha=1.0, beta=0.1)` — Unified visualization
+- `visualize_action_summaries(summaries_by_type, output_file=None, methods=None, grid_size=80, bandwidth=None, alpha=1.0, beta=0.1)` → `Path` — Unified visualization. Returns the output HTML path.
   - Dict order = render order: last key on top
   - `methods`: `'pca'`, `'tsne'`, `'umap'`, `'trimap'`, `'pacmap'` (default: `['tsne']`)
   - All methods pre-computed in Python; switching is instant in JS
@@ -335,6 +335,7 @@ hodoscope viz output.hodoscope.json --proj '*'                    # all methods 
 hodoscope viz output.hodoscope.json -o my_plot.html               # custom output path
 hodoscope viz output.hodoscope.json --filter score=1.0            # only score=1.0 summaries
 hodoscope viz output.hodoscope.json --filter score=1.0 --filter epoch=1  # AND logic
+hodoscope viz output.hodoscope.json --open                               # open in default browser
 ```
 
 ### `hodoscope sample`

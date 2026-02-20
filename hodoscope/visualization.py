@@ -1588,3 +1588,4 @@ def visualize_action_summaries(
 
     _build_unified_bokeh(projections, data, html_path)
     print(f"Saved visualization to {html_path}")
+    return html_path

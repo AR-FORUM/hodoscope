@@ -128,6 +128,7 @@ Options:
   --group-by TEXT     Field to group by (default: model)
   --plots TEXT        Plot types: pca, tsne, umap, trimap, pacmap, dynamic, density
   --output-dir TEXT   Directory for HTML output files
+  --open              Open the generated HTML in the default browser
 ```
 
 Examples:
@@ -139,6 +140,7 @@ hodoscope viz output.json --group-by score             # group by score field
 hodoscope viz *.json                                   # batch: all JSONs
 hodoscope viz a.json b.json --group-by model           # cross-file comparison
 hodoscope viz output.json --plots tsne umap            # specific plot types
+hodoscope viz output.json --open                       # open in default browser
 ```
 
 ### `hodoscope info`

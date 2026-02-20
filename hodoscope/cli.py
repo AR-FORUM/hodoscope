@@ -1,6 +1,7 @@
 """CLI entry point for hodoscope v2."""
 
 import sys
+import webbrowser
 
 import click
 
@@ -164,8 +165,10 @@ def analyze(sources, docent_id, output, field, limit, save_samples,
               help="Output HTML file path (default: auto-generated timestamped name)")
 @click.option("--filter", "filters", multiple=True,
               help="KEY=VALUE metadata filter (repeatable, AND logic)")
+@click.option("--open", "open_browser", is_flag=True, default=False,
+              help="Open the generated HTML in the default browser")
 @_handle_error
-def viz(sources, group_by, proj, output_file, filters):
+def viz(sources, group_by, proj, output_file, filters, open_browser):
     """Visualize analysis JSON files with a unified interactive plot.
 
     Produces a single HTML file with a method switcher dropdown, density
@@ -202,13 +205,15 @@ def viz(sources, group_by, proj, output_file, filters):
             param_hint="'--proj'",
         )
 
-    viz_fn(
+    html_path = viz_fn(
         sources=sources,
         group_by=group_by,
         proj=flat or None,
         output_file=output_file,
         filter=_build_filter(filters),
     )
+    if open_browser and html_path:
+        webbrowser.open(html_path.resolve().as_uri())
 
 
 # ---------------------------------------------------------------------------
