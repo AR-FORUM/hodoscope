@@ -5,6 +5,8 @@ Creates a unified interactive visualization with method switcher dropdown,
 density heatmap overlay, and FPS-based flagging.
 """
 
+import base64
+import gzip
 import json
 from dataclasses import dataclass
 from pathlib import Path
@@ -790,6 +792,46 @@ def _make_search_widgets():
     return search_input, search_mode, match_div
 
 
+def _compress_data(data):
+    """Gzip-compress a JSON-serializable object and return a base64 string."""
+    js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
+    compressed = gzip.compress(js.encode('utf-8'))
+    return base64.b64encode(compressed).decode('ascii')
+
+
+# JS snippet that decompresses gzip'd base64 data into window globals.
+# Uses DecompressionStream (supported in Chrome 80+, Firefox 113+, Safari 16.4+).
+_DECOMPRESS_JS = """
+<script>
+(async function() {
+  async function _hodoDecode(b64) {
+    var bin = atob(b64);
+    var bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var ds = new DecompressionStream('gzip');
+    var writer = ds.writable.getWriter();
+    writer.write(bytes);
+    writer.close();
+    var reader = ds.readable.getReader();
+    var chunks = [];
+    while (true) {
+      var result = await reader.read();
+      if (result.done) break;
+      chunks.push(result.value);
+    }
+    var totalLen = 0;
+    for (var c of chunks) totalLen += c.length;
+    var merged = new Uint8Array(totalLen);
+    var offset = 0;
+    for (var c of chunks) { merged.set(c, offset); offset += c.length; }
+    return JSON.parse(new TextDecoder().decode(merged));
+  }
+  %s
+})();
+</script>
+""".strip()
+
+
 def _save_with_sidebar(layout, html_path, title, external_data=None):
     """Save Bokeh layout to HTML and append the detail sidebar."""
     output_file(str(html_path), title=title)
@@ -797,10 +839,13 @@ def _save_with_sidebar(layout, html_path, title, external_data=None):
     with open(html_path, 'a') as f:
         f.write(SIDEBAR_HTML)
         if external_data:
+            assignments = []
             for var_name, data in external_data.items():
-                js = json.dumps(data, ensure_ascii=False, separators=(',', ':'))
-                js = js.replace('</','<\\/')
-                f.write(f'\n<script>window.{var_name}={js};</script>')
+                b64 = _compress_data(data)
+                assignments.append(
+                    f'window.{var_name}=await _hodoDecode("{b64}");'
+                )
+            f.write('\n' + _DECOMPRESS_JS % '\n  '.join(assignments))
 
 
 # ---------------------------------------------------------------------------
