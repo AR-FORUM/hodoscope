@@ -203,12 +203,12 @@ Options:
 Examples:
 
 ```bash
-hodoscope sample output.hodoscope.json                        # suggest 10 per group
-hodoscope sample output.hodoscope.json --group-by score -n 5  # suggest 5 per score group
-hodoscope sample output.hodoscope.json --proj pca             # use PCA projection
-hodoscope sample output.hodoscope.json -o sampled.json        # write JSON output
-hodoscope sample a.hodoscope.json b.hodoscope.json --interleave  # interleave groups by rank for easier comparison
-hodoscope sample output.hodoscope.json --filter score=1.0     # only score=1.0 summaries
+hodoscope sample *.hodoscope.json                         # suggest 10 per group
+hodoscope sample *.hodoscope.json --group-by score -n 5   # suggest 5 per score group
+hodoscope sample *.hodoscope.json --proj pca              # use PCA projection
+hodoscope sample *.hodoscope.json -o sampled.json         # write JSON output
+hodoscope sample *.hodoscope.json --interleave            # interleave groups by rank for easier comparison
+hodoscope sample *.hodoscope.json --filter score=1.0      # only score=1.0 summaries
 ```
 
 ### `hodoscope info`
