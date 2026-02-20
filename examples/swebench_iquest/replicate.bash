@@ -17,6 +17,10 @@ for i, t in enumerate(json.load(open('iquest_traj.json'))):
 rm iquest_traj.json
 
 # Step 2: Analyze (50 trajectories per model, seed=42)
+# WARNING: Using the default summarization model (gpt-5.2) costs ~$35 in
+# OpenAI API calls total. You can reduce cost by switching summarization model
+# (e.g. --summarize-model gemini/gemini-3-flash-preview) or further subsampling.
+
 hodoscope analyze --docent-id 565e5680-b913-4031-b537-00721a7a619a -l 50 --seed 42 --field model=o3
 hodoscope analyze --docent-id cd7a23c5-a2b1-4cab-b851-6e2c42aaf0f3 -l 50 --seed 42 --field model=gpt-4.1
 hodoscope analyze --docent-id f39d3041-d9d7-4f1b-b75e-8a13addb9e6e -l 50 --seed 42 --field model=qwen3-coder

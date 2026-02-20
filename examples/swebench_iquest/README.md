@@ -38,6 +38,8 @@ rm iquest_traj.json
 
 Run `hodoscope analyze` on each source. We sample 50 trajectories per model with a fixed seed for reproducibility, and annotate the model names with `--field`:
 
+> **⚠️ Cost note:** This demo uses the default summarization model (`gpt-5.2`) and costs ~$35 in OpenAI API calls total. You can reduce cost by switching summarization model (e.g. `--summarize-model gemini/gemini-3-flash-preview`) or further subsampling.
+
 ```bash
 # Docent sources
 hodoscope analyze --docent-id 565e5680-b913-4031-b537-00721a7a619a -l 50 --seed 42 --field model=o3
