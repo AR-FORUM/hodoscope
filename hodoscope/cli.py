@@ -105,10 +105,13 @@ def main():
               help="Max parallel workers for LLM calls (env: MAX_WORKERS, default: 10)")
 @click.option("--reembed", is_flag=True, default=False,
               help="Re-embed existing summaries (e.g. after changing embedding model/dim)")
+@click.option("--resummarize", is_flag=True, default=False,
+              help="Re-summarize and re-embed existing summaries (e.g. after changing summarization model/prompt)")
 @_handle_error
 def analyze(sources, docent_id, output, field, limit, save_samples,
             embed_dim, model_name, summarize_model, embedding_model,
-            sample, seed, resume, reasoning_effort, max_workers, reembed):
+            sample, seed, resume, reasoning_effort, max_workers, reembed,
+            resummarize):
     """Analyze source files and produce .hodoscope.json output(s).
 
     SOURCES can be .eval files, directories containing .eval files,
@@ -147,6 +150,7 @@ def analyze(sources, docent_id, output, field, limit, save_samples,
         resume=resume,
         config=config,
         reembed=reembed,
+        resummarize=resummarize,
     )
 
 

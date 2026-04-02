@@ -83,7 +83,9 @@ def _resolve_sources(sources: tuple[str, ...], docent_id: str | None = None) -> 
 
     for src in sources:
         p = Path(src)
-        if _is_eval_file(p):
+        if p.is_file() and p.name.endswith(".hodoscope.json"):
+            resolved.append({"type": "hodoscope", "path": p})
+        elif _is_eval_file(p):
             resolved.append({"type": "eval", "path": p})
         elif _is_openhands_jsonl(p):
             resolved.append({"type": "openhands", "path": p})
@@ -459,6 +461,7 @@ def analyze(
     resume: bool = True,
     config=None,
     reembed: bool = False,
+    resummarize: bool = False,
 ) -> list[Path]:
     """Analyze source files and produce .hodoscope.json output(s).
 
@@ -476,6 +479,8 @@ def analyze(
         config: Config instance. Defaults to Config.from_env() (loads .env).
         reembed: Re-embed existing summaries using current config (e.g. after
             changing embedding model or dimensions). Implies resume.
+        resummarize: Re-summarize and re-embed existing summaries using current
+            config (e.g. after changing summarization model/prompt). Implies resume.
 
     Returns:
         List of paths to written analysis JSON files.
@@ -512,6 +517,77 @@ def analyze(
         src_type = src["type"]
 
         print(f"\n{'=' * 60}")
+        if src_type == "hodoscope":
+            # Reprocessing existing .hodoscope.json (for --resummarize / --reembed)
+            print(f"Reprocessing: {src['path']}")
+            print(f"  Summarize model: {config.summarize_model}")
+            print(f"  Embedding model: {config.embedding_model}")
+            print(f"  Embed dim: {config.embed_dim}")
+            existing_doc = read_analysis_json(src["path"])
+            existing_summaries = existing_doc.get("summaries", [])
+            file_fields = {**existing_doc.get("fields", {}), **custom_fields}
+            source_label = existing_doc.get("source", str(src["path"]))
+            out_path = Path(output) if output else src["path"]
+            dim = config.embed_dim
+
+            if resummarize:
+                from .actions import summarize_action, embed_summary
+                from .core import run_parallel
+
+                print(f"  Re-summarizing {len(existing_summaries)} existing summaries...")
+
+                def _resummarize_one(args):
+                    s, cfg, idx = args
+                    summarize_kwargs = dict(
+                        model=cfg.summarize_model,
+                        reasoning_effort=cfg.reasoning_effort,
+                    )
+                    if cfg.summarize_prompt is not None:
+                        summarize_kwargs['system_prompt'] = cfg.summarize_prompt
+                    new_summary = summarize_action(s['action_text'], **summarize_kwargs)
+                    tqdm.write(f"[{idx}] {new_summary}")
+                    s_copy = dict(s)
+                    s_copy['summary'] = new_summary
+                    return embed_summary(s_copy, cfg)
+
+                existing_summaries = run_parallel(
+                    func=_resummarize_one,
+                    tasks=[(s, config, i) for i, s in enumerate(existing_summaries)],
+                    desc="Re-summarizing",
+                    max_workers=config.max_workers,
+                )
+            elif reembed:
+                from .actions import embed_summary
+                from .core import run_parallel
+
+                print(f"  Re-embedding {len(existing_summaries)} existing summaries...")
+
+                def _reembed_one(args):
+                    s, cfg = args
+                    return embed_summary(s, cfg)
+
+                existing_summaries = run_parallel(
+                    func=_reembed_one,
+                    tasks=[(s, config) for s in existing_summaries],
+                    desc="Re-embedding",
+                    max_workers=config.max_workers,
+                )
+            else:
+                print("  WARNING: .hodoscope.json source requires --resummarize or --reembed")
+                continue
+
+            write_analysis_json(
+                path=out_path,
+                summaries=existing_summaries,
+                fields=file_fields,
+                source=source_label,
+                embedding_model=config.embedding_model,
+                embedding_dimensionality=dim,
+            )
+            print(f"\n  Wrote {len(existing_summaries)} summaries to {out_path}")
+            written_files.append(out_path)
+            continue
+
         if src_type == "eval":
             print(f"Processing .eval file: {src['path']}")
             trajectories, auto_fields = load_eval(
@@ -574,8 +650,36 @@ def analyze(
                 existing_summaries = []
                 skip_set = None
 
+        # Re-summarize existing summaries if requested (also re-embeds)
+        if resummarize and existing_summaries:
+            from .actions import summarize_action, embed_summary
+            from .core import run_parallel
+
+            print(f"  Re-summarizing {len(existing_summaries)} existing summaries...")
+
+            def _resummarize_one(args):
+                s, cfg, idx = args
+                summarize_kwargs = dict(
+                    model=cfg.summarize_model,
+                    reasoning_effort=cfg.reasoning_effort,
+                )
+                if cfg.summarize_prompt is not None:
+                    summarize_kwargs['system_prompt'] = cfg.summarize_prompt
+                new_summary = summarize_action(s['action_text'], **summarize_kwargs)
+                tqdm.write(f"[{idx}] {new_summary}")
+                s_copy = dict(s)
+                s_copy['summary'] = new_summary
+                return embed_summary(s_copy, cfg)
+
+            existing_summaries = run_parallel(
+                func=_resummarize_one,
+                tasks=[(s, config, i) for i, s in enumerate(existing_summaries)],
+                desc="Re-summarizing",
+                max_workers=config.max_workers,
+            )
+
         # Re-embed existing summaries if requested
-        if reembed and existing_summaries:
+        elif reembed and existing_summaries:
             from .actions import embed_summary
             from .core import run_parallel
 
