@@ -7,7 +7,7 @@
 
 Unsupervised, human-in-the-loop trajectory analysis for AI agents. Summarize, embed, and visualize thousands of agent actions to find patterns across models and configurations. Supports common evaluation formats and any LiteLLM-compatible model (e.g. OpenAI, Gemini, Google, Anthropic, etc.) for summarization and embedding.
 
-[Homepage](https://hodoscope.dev) · [Arxiv](https://arxiv.org/abs/2604.11072)
+[Homepage](https://hodoscope.dev) · [Announcement blog](https://hodoscope.dev/blog/announcement.html) · [Paper](https://arxiv.org/abs/2604.11072)
 
 ## Why Hodoscope?
 
