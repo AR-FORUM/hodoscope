@@ -7,7 +7,7 @@
 
 Unsupervised, human-in-the-loop trajectory analysis for AI agents. Summarize, embed, and visualize thousands of agent actions to find patterns across models and configurations. Supports common evaluation formats and any LiteLLM-compatible model (e.g. OpenAI, Gemini, Google, Anthropic, etc.) for summarization and embedding.
 
-[Homepage](https://hodoscope.dev) · [Announcement blog](https://hodoscope.dev/blog/announcement.html)
+[Homepage](https://hodoscope.dev) · [Arxiv](https://arxiv.org/abs/2604.11072)
 
 ## Why Hodoscope?
 
@@ -290,10 +290,10 @@ Contributions are welcome! We recommend opening an issue to discuss what you'd l
 
 ```bibtex
 @article{zhong2026hodoscope,
-  title={Hodoscope: Unsupervised Behavior Discovery in AI Agents},
-  author={Zhong, Ziqian and Saxena, Shashwat and Raghunathan, Aditi},
-  year={2026},
-  url={https://hodoscope.dev/blog/announcement.html}
+  title   = {Hodoscope: Unsupervised Monitoring for AI Misbehaviors},
+  author  = {Zhong, Ziqian and Saxena, Shashwat and Raghunathan, Aditi},
+  journal = {arXiv preprint arXiv:2604.11072},
+  year    = {2026}
 }
 ```
 
